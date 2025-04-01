@@ -1,0 +1,18 @@
+body {
+    height: 100vh;
+    margin: 0;
+}
+.email-item:hover {
+    background-color: #f8f9fa;
+}
+.unread {
+    font-weight: bold;
+}
+.email-header {
+    background-color: #f1f3f4;
+}
+.active {
+    background-color: #d3e3fd;
+    color: #1967d2;
+    border-color: #1967d2;
+}
