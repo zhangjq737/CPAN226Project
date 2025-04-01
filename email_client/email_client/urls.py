@@ -22,7 +22,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('test/', views.test_view),
     path('', views.index, name='index'),
-    path('inbox/', views.index, name='inbox'),
+
+    path('inbox/', views.get_inbox, name='inbox'),
     path('sent/', views.index, name='sent'),
     path('drafts/', views.index, name='drafts'),
+    path('send-email/', views.send_email, name='send_email'),
 ]

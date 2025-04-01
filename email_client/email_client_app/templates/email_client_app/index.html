@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Email Client</title>
     {% load static %}
-    <!-- Bootstrap CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'email_client_app/css/style.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -12,10 +11,9 @@
 <body>
     <div class="container-fluid h-100">
         <div class="row h-100">
-            <!-- Left Sidebar -->
             <div class="col-md-3 col-lg-2 bg-light border-end p-3">
-                <button class="btn btn-primary w-100 mb-3" id="compose">+ Compose</button>
-                <a href="{% url 'inbox' %}" class="d-block btn btn-outline-primary w-100 mb-2 active">
+                <button class="btn btn-primary w-100 mb-3" id="compose" data-bs-toggle="modal" data-bs-target="#composeModal">+ Compose</button>
+                <a href="{% url 'inbox' %}" class="d-block btn btn-outline-primary w-100 mb-2 active" id="inboxBtn">
                     <i class="bi bi-inbox"></i> Inbox (<span id="unread-count">0</span>)
                 </a>
                 <a href="{% url 'sent' %}" class="d-block btn btn-outline-primary w-100 mb-2">
@@ -25,7 +23,6 @@
                     <i class="bi bi-pencil"></i> Drafts (<span id="draft-count">0</span>)
                 </a>
             </div>
-            <!-- Right Email List -->
             <div class="col-md-9 col-lg-10 p-0">
                 <div class="email-header bg-light p-2 border-bottom">
                     <div class="row fw-bold">
@@ -35,29 +32,123 @@
                         <div class="col-2 text-end">Time</div>
                     </div>
                 </div>
-                <ul class="email-list list-group list-group-flush" id="email-list">
-                    <li class="email-item list-group-item unread">
-                        <div class="row">
-                            <div class="col-3">user1@example.com</div>
-                            <div class="col-4">Meeting Today</div>
-                            <div class="col-3">Let’s discuss at 3 PM...</div>
-                            <div class="col-2 text-end">10:30 AM</div>
-                        </div>
-                    </li>
-                    <li class="email-item list-group-item">
-                        <div class="row">
-                            <div class="col-3">user2@example.com</div>
-                            <div class="col-4">Project Update</div>
-                            <div class="col-3">Progress is on track...</div>
-                            <div class="col-2 text-end">Yesterday</div>
-                        </div>
-                    </li>
-                </ul>
+                <ul class="email-list list-group list-group-flush" id="email-list"></ul>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS (optional, for interactivity) -->
+    <!-- Compose Modal (unchanged, just collapsed for brevity) -->
+    <div class="modal fade" id="composeModal" tabindex="-1" aria-labelledby="composeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="composeModalLabel">New Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="composeForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="sender" class="form-label">From</label>
+                            <input type="email" class="form-control" id="sender" name="sender" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="receiver" class="form-label">To</label>
+                            <input type="email" class="form-control" id="receiver" name="receiver" placeholder="Enter recipient(s), separated by commas" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cc" class="form-label">CC</label>
+                            <input type="email" class="form-control" id="cc" name="cc" placeholder="Enter CC recipient(s), separated by commas">
+                        </div>
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="subject" name="subject" placeholder="Enter subject">
+                        </div>
+                        <div class="mb-3">
+                            <label for="body" class="form-label">Body</label>
+                            <textarea class="form-control" id="body" name="body" rows="5" placeholder="Enter your message"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="attachment" class="form-label">Attachment</label>
+                            <input type="file" class="form-control" id="attachment" name="attachment">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="sendEmail">Send</button>
+                    <button type="button" class="btn btn-outline-secondary" id="saveDraft">Save to Draft</button>
+                    <button type="button" class="btn btn-outline-danger" id="deleteDraft" data-bs-dismiss="modal">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Function to fetch and display inbox
+        function loadInbox() {
+            fetch("{% url 'inbox' %}")
+                .then(response => response.json())
+                .then(data => {
+                    const emailList = document.getElementById('email-list');
+                    const unreadCount = document.getElementById('unread-count');
+                    emailList.innerHTML = '';  // Clear existing list
+                    data.emails.forEach(email => {
+                        const li = document.createElement('li');
+                        li.className = `email-item list-group-item ${email.unread ? 'unread' : ''}`;
+                        li.innerHTML = `
+                            <div class="row">
+                                <div class="col-3">${email.sender}</div>
+                                <div class="col-4">${email.subject}</div>
+                                <div class="col-3">${email.snippet}</div>
+                                <div class="col-2 text-end">${email.time}</div>
+                            </div>
+                        `;
+                        emailList.appendChild(li);
+                    });
+                    unreadCount.textContent = data.unread_count;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Load inbox by default
+        window.onload = loadInbox;
+
+        // Reload inbox on click
+        document.getElementById('inboxBtn').addEventListener('click', function(e) {
+            e.preventDefault();  // Prevent default link behavior
+            loadInbox();
+        });
+
+        // Compose/send logic (unchanged)
+        document.getElementById('compose').addEventListener('click', function() {
+            document.getElementById('sender').value = '{{ settings.EMAIL_SENDER }}';
+        });
+
+        document.getElementById('sendEmail').addEventListener('click', function() {
+            const form = document.getElementById('composeForm');
+            const formData = new FormData(form);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch("{% url 'send_email' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    bootstrap.Modal.getInstance(document.getElementById('composeModal')).hide();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => alert('Error: ' + error));
+        });
+    </script>
 </body>
 </html>
