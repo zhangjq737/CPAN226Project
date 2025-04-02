@@ -9,6 +9,19 @@ import os
 from email.parser import BytesParser
 import imaplib
 
+# (\HasNoChildren) "/" "Health"
+# (\HasNoChildren) "/" "INBOX"
+# (\HasNoChildren) "/" "Notes"
+# (\HasChildren \Noselect) "/" "[Gmail]"
+# (\All \HasNoChildren) "/" "[Gmail]/All Mail"
+# (\Drafts \HasNoChildren) "/" "[Gmail]/Drafts"
+# (\HasNoChildren \Important) "/" "[Gmail]/Important"
+# (\HasNoChildren \Sent) "/" "[Gmail]/Sent Mail"
+# (\HasNoChildren \Junk) "/" "[Gmail]/Spam"
+# (\Flagged \HasNoChildren) "/" "[Gmail]/Starred"
+# (\HasNoChildren \Trash) "/" "[Gmail]/Trash"
+# (\HasChildren \Noselect) "/" "[Imap]"
+
 # Create your views here.
 def test_view(request):
     return HttpResponse('Email App is working!')
@@ -18,15 +31,8 @@ def index(request):
 
 def send_email(request):
     if request.method == 'POST':
-        # Debug input
-        # print("Raw receiver:", request.POST.get('receiver', ''))
-        # print("Raw CC:", request.POST.get('cc', ''))
-
         receivers = [r.strip() for r in request.POST.get('receiver', '').split(',') if r.strip()]
         cc = [c.strip() for c in request.POST.get('cc', '').split(',') if c.strip()]
-        
-        # print("Processed receivers:", receivers)
-        # print("Processed CC:", cc)
 
         subject = request.POST.get('subject', '')
         body = request.POST.get('body', '')
@@ -63,7 +69,7 @@ def send_email(request):
 def get_inbox(request):
     mail = imaplib.IMAP4_SSL("imap.gmail.com")
     mail.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
-    mail.select("inbox")
+    mail.select("INBOX")
 
     # Get unread count
     status, unread = mail.search(None, "UNSEEN")
@@ -89,10 +95,103 @@ def get_inbox(request):
         emails.append({
             'sender': email_message['from'],
             'subject': email_message['subject'] or '(No Subject)',
-            # 'snippet': (email_message.get_payload(0).get_payload()[:50].strip() if isinstance(email_message.get_payload(), list) else email_message.get_payload()[:50].strip()) if email_message.get_payload() else '',
+            'snippet': get_email_snippet(email_message, 50),
             'time': email_message['date'] or 'Unknown',
             'unread': is_unread
         })
 
     mail.logout()
     return JsonResponse({'emails': emails, 'unread_count': unread_count})
+
+def get_sent(request):    
+    mail = imaplib.IMAP4_SSL("imap.gmail.com")
+    mail.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
+    mail.select(r'"[Gmail]/Sent Mail"')
+
+    status, messages = mail.search(None, "ALL")
+    if status != 'OK' or not messages[0]:
+        mail.logout()
+        return JsonResponse({'emails': []})
+
+    email_ids = messages[0].split()[-10:]
+    emails = []
+
+    for email_id in email_ids:
+        status, msg_data = mail.fetch(email_id, "(RFC822)")
+        if status != 'OK' or not msg_data[0]:
+            continue
+        raw_email = msg_data[0][1]
+        email_message = BytesParser().parsebytes(raw_email)
+        emails.append({
+            'sender': email_message['from'],
+            'subject': email_message['subject'] or '(No Subject)',
+            'snippet': get_email_snippet(email_message, 50),
+            'time': email_message['date'] or 'Unknown'
+        })
+
+    mail.logout()
+    return JsonResponse({'emails': emails})
+
+def get_drafts(request):
+    mail = imaplib.IMAP4_SSL("imap.gmail.com")
+    mail.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
+    mail.select(r'"[Gmail]/Drafts"')  # Gmail drafts folder
+
+    # Get all draft emails (limit to last 10)
+    status, messages = mail.search(None, "ALL")
+    if status != 'OK' or not messages[0]:
+        mail.logout()
+        return JsonResponse({'emails': [], 'draft_count': 0})
+
+    email_ids = messages[0].split()[-10:]
+    emails = []
+
+    for email_id in email_ids:
+        status, msg_data = mail.fetch(email_id, "(RFC822)")
+        if status != 'OK' or not msg_data[0]:
+            continue
+        raw_email = msg_data[0][1]
+        email_message = BytesParser().parsebytes(raw_email)
+        emails.append({
+            'sender': email_message['from'],
+            'subject': email_message['subject'] or '(No Subject)',
+            'snippet': get_email_snippet(email_message, 50),
+            'time': email_message['date'] or 'Unknown'
+        })
+
+    draft_count = len(email_ids)  # Total drafts shown
+    mail.logout()
+    return JsonResponse({'emails': emails, 'draft_count': draft_count})
+
+def get_email_snippet(email_message, max_length):
+    try:
+        # Simple approach for text extraction
+        if email_message.is_multipart():
+            for part in email_message.walk():
+                content_type = part.get_content_type()
+                if content_type == 'text/plain':
+                    content = part.get_payload(decode=True)
+                    if content:
+                        try:
+                            if isinstance(content, bytes):
+                                text = content.decode('utf-8', errors='replace')
+                            else:
+                                text = str(content)
+                            return text[:max_length].strip()
+                        except:
+                            pass
+            # Fallback to first part if no text/plain
+            return str(email_message.get_payload(0))[:max_length].strip()
+        else:
+            # For non-multipart emails
+            content = email_message.get_payload(decode=True)
+            if content is None:
+                return ''
+            if isinstance(content, bytes):
+                text = content.decode('utf-8', errors='replace')
+            else:
+                text = str(content)
+            return text[:max_length].strip()
+    except Exception as e:
+        print(f"Error in snippet extraction: {e}")
+        return ''

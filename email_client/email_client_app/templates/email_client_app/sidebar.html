@@ -1,0 +1,12 @@
+<div class="col-md-3 col-lg-2 bg-light border-end p-3">
+    <button class="btn btn-primary w-100 mb-3" id="compose" data-bs-toggle="modal" data-bs-target="#composeModal">+ Compose</button>
+    <a href="{% url 'inbox' %}" class="d-block btn btn-outline-primary w-100 mb-2 active" id="inboxBtn">
+        <i class="bi bi-inbox"></i> Inbox (<span id="unread-count">0</span>)
+    </a>
+    <a href="{% url 'sent' %}" class="d-block btn btn-outline-primary w-100 mb-2" id="sentBtn">
+        <i class="bi bi-send"></i> Sent
+    </a>
+    <a href="{% url 'drafts' %}" class="d-block btn btn-outline-primary w-100 mb-2" id="draftsBtn">
+        <i class="bi bi-pencil"></i> Drafts (<span id="draft-count">0</span>)
+    </a>
+</div>

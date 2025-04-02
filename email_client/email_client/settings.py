@@ -126,8 +126,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Email settings
+# EMAIL_SENDER = 'zjqrich@gmail.com'
+# EMAIL_PASSWORD = 'ughp walh dkss tqit'  # Replace with your actual App Password
 EMAIL_SENDER = 'zjqrich@gmail.com'
-EMAIL_PASSWORD = 'ughp walh dkss tqit'  # Replace with your actual App Password
+EMAIL_PASSWORD = 'ughp walh dkss tqit'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
