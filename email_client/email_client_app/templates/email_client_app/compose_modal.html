@@ -11,7 +11,7 @@
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="sender" class="form-label">From</label>
-                        <input type="email" class="form-control" id="sender" name="sender" readonly>
+                        <input type="email" class="form-control" id="sender" name="sender" value="{{email_sender}}" readonly>
                     </div>
                     <div class="mb-3">
                         <label for="receiver" class="form-label">To</label>

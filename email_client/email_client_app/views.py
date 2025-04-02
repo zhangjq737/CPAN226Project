@@ -27,7 +27,10 @@ def test_view(request):
     return HttpResponse('Email App is working!')
 
 def index(request):
-    return render(request, 'email_client_app/index.html')
+    return render(request, 'email_client_app/index.html', {
+        'settings': settings,  # Already passing settings
+        'email_sender': settings.EMAIL_SENDER  # Explicitly pass EMAIL_SENDER
+    })
 
 def send_email(request):
     if request.method == 'POST':

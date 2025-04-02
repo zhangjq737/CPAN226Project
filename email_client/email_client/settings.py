@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -125,11 +126,8 @@ STATICFILES_DIRS = [BASE_DIR / "email_client_app/static"]
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# Email settings
-# EMAIL_SENDER = 'zjqrich@gmail.com'
-# EMAIL_PASSWORD = 'ughp walh dkss tqit'  # Replace with your actual App Password
-EMAIL_SENDER = 'zjqrich@gmail.com'
-EMAIL_PASSWORD = 'ughp walh dkss tqit'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True
+EMAIL_SENDER = config('EMAIL_SENDER')
+EMAIL_PASSWORD = config('EMAIL_PASSWORD')
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)  # Cast to int
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', cast=bool)  # Cast to bool

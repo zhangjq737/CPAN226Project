@@ -86,9 +86,9 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         loadDrafts();
     });
-    document.getElementById('compose').addEventListener('click', function() {
-        document.getElementById('sender').value = '{{ settings.EMAIL_SENDER }}';
-    });
+    // document.getElementById('compose').addEventListener('click', function() {
+    //     document.getElementById('sender').value = '{{ settings.EMAIL_SENDER }}';
+    // });
     document.getElementById('sendEmail').addEventListener('click', function() {
         const form = document.getElementById('composeForm');
         const formData = new FormData(form);
