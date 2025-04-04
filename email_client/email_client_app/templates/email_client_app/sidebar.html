@@ -1,12 +1,34 @@
-<div class="col-md-3 col-lg-2 bg-light border-end p-3">
-    <button class="btn btn-primary w-100 mb-3" id="compose" data-bs-toggle="modal" data-bs-target="#composeModal">+ Compose</button>
-    <a href="{% url 'inbox' %}" class="d-block btn btn-outline-primary w-100 mb-2 active" id="inboxBtn">
-        <i class="bi bi-inbox"></i> Inbox (<span id="unread-count">0</span>)
-    </a>
-    <a href="{% url 'sent' %}" class="d-block btn btn-outline-primary w-100 mb-2" id="sentBtn">
-        <i class="bi bi-send"></i> Sent
-    </a>
-    <a href="{% url 'drafts' %}" class="d-block btn btn-outline-primary w-100 mb-2" id="draftsBtn">
-        <i class="bi bi-pencil"></i> Drafts (<span id="draft-count">0</span>)
-    </a>
+<div class="w-64 bg-white border-r border-gray-200 h-full flex flex-col">
+    <div class="p-4">
+        <button id="compose" data-bs-toggle="modal" data-bs-target="#composeModal" 
+                class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg 
+                       flex items-center justify-center transition-colors duration-150">
+            <i class="bi bi-plus mr-2"></i> Compose
+        </button>
+    </div>
+    
+    <nav class="mt-2 px-4">
+        <a href="{% url 'inbox' %}" id="inboxBtn" 
+           class="flex items-center px-4 py-2 mb-2 text-sm font-medium rounded-md 
+                  bg-primary-50 text-primary-700 group hover:bg-primary-100 transition-colors duration-150">
+            <i class="bi bi-inbox mr-3 text-lg"></i>
+            <span class="flex-1">Inbox</span>
+            <span id="unread-count" class="bg-primary-500 text-white text-xs font-bold px-2 py-1 rounded-full">0</span>
+        </a>
+        
+        <a href="{% url 'sent' %}" id="sentBtn"
+           class="flex items-center px-4 py-2 mb-2 text-sm font-medium rounded-md
+                  text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-150">
+            <i class="bi bi-send mr-3 text-lg"></i>
+            <span>Sent</span>
+        </a>
+        
+        <a href="{% url 'drafts' %}" id="draftsBtn"
+           class="flex items-center px-4 py-2 mb-2 text-sm font-medium rounded-md
+                  text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-150">
+            <i class="bi bi-pencil mr-3 text-lg"></i>
+            <span class="flex-1">Drafts</span>
+            <span id="draft-count" class="bg-gray-200 text-gray-800 text-xs font-bold px-2 py-1 rounded-full">0</span>
+        </a>
+    </nav>
 </div>

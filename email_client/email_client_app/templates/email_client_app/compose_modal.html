@@ -1,45 +1,103 @@
 {% load static %}
-<div class="modal fade" id="composeModal" tabindex="-1" aria-labelledby="composeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="composeModalLabel">New Message</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div id="composeModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="composeModalLabel" tabindex="-1">
+  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+    
+    <!-- Modal panel -->
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900" id="composeModalLabel">
+              New Message
+            </h3>
+            
+            <div class="mt-4">
+              <form id="composeForm" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                  <label for="sender" class="block text-sm font-medium text-gray-700">From</label>
+                  <input type="email" id="sender" name="sender" value="{{email_sender}}" readonly
+                         class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-50 text-gray-500 sm:text-sm">
+                </div>
+                
+                <div>
+                  <label for="receiver" class="block text-sm font-medium text-gray-700">To</label>
+                  <input type="email" id="receiver" name="receiver" required placeholder="Enter recipient(s), separated by commas"
+                         class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                
+                <div>
+                  <label for="cc" class="block text-sm font-medium text-gray-700">CC</label>
+                  <input type="email" id="cc" name="cc" placeholder="Enter CC recipient(s), separated by commas"
+                         class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                
+                <div>
+                  <label for="subject" class="block text-sm font-medium text-gray-700">Subject</label>
+                  <input type="text" id="subject" name="subject" placeholder="Enter subject"
+                         class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                
+                <div>
+                  <label for="body" class="block text-sm font-medium text-gray-700">Body</label>
+                  <textarea id="body" name="body" rows="8" placeholder="Enter your message"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"></textarea>
+                </div>
+                
+                <div>
+                  <label for="attachment" class="block text-sm font-medium text-gray-700">Attachment</label>
+                  <input type="file" id="attachment" name="attachment"
+                         class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+                </div>
+              </form>
             </div>
-            <div class="modal-body">
-                <form id="composeForm">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="sender" class="form-label">From</label>
-                        <input type="email" class="form-control" id="sender" name="sender" value="{{email_sender}}" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label for="receiver" class="form-label">To</label>
-                        <input type="email" class="form-control" id="receiver" name="receiver" placeholder="Enter recipient(s), separated by commas" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="cc" class="form-label">CC</label>
-                        <input type="email" class="form-control" id="cc" name="cc" placeholder="Enter CC recipient(s), separated by commas">
-                    </div>
-                    <div class="mb-3">
-                        <label for="subject" class="form-label">Subject</label>
-                        <input type="text" class="form-control" id="subject" name="subject" placeholder="Enter subject">
-                    </div>
-                    <div class="mb-3">
-                        <label for="body" class="form-label">Body</label>
-                        <textarea class="form-control" id="body" name="body" rows="5" placeholder="Enter your message"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="attachment" class="form-label">Attachment</label>
-                        <input type="file" class="form-control" id="attachment" name="attachment">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="sendEmail">Send</button>
-                <button type="button" class="btn btn-outline-secondary" id="saveDraft">Save to Draft</button>
-                <button type="button" class="btn btn-outline-danger" id="deleteDraft" data-bs-dismiss="modal">Delete</button>
-            </div>
+          </div>
         </div>
+      </div>
+      
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button type="button" id="sendEmail"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm">
+          Send
+        </button>
+        <button type="button" id="saveDraft"
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+          Save Draft
+        </button>
+        <button type="button" id="deleteDraft" data-bs-dismiss="modal"
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-red-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+          Delete
+        </button>
+      </div>
     </div>
+  </div>
 </div>
+
+<!-- Custom JavaScript for modal functionality -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('composeModal');
+    const openButton = document.getElementById('compose');
+    const closeButtons = modal.querySelectorAll('[data-bs-dismiss="modal"]');
+    
+    // Open modal
+    openButton.addEventListener('click', function() {
+      modal.classList.remove('hidden');
+    });
+    
+    // Close modal
+    closeButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        modal.classList.add('hidden');
+      });
+    });
+    
+    // Close when clicking outside
+    modal.addEventListener('click', function(event) {
+      if (event.target === modal) {
+        modal.classList.add('hidden');
+      }
+    });
+  });
+</script>
