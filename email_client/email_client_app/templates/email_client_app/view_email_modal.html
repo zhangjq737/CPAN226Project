@@ -1,0 +1,194 @@
+{% load static %}
+<div id="viewEmailModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="viewEmailModalLabel" tabindex="-1">
+  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+    
+    <!-- Modal panel -->
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-lg transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full border border-gray-100">
+      <div class="bg-gradient-to-r from-gray-50 to-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-semibold text-gray-900" id="viewEmailModalLabel">
+              Email Details
+            </h3>
+            
+            <!-- Condensed metadata section -->
+            <div class="mt-4 space-y-2">
+              <p class="text-sm text-gray-600"><span class="font-medium">From:</span> <span id="view-sender"></span> <span id="view-time" class="text-gray-500 italic ml-4"></span></p>
+              <p class="text-sm text-gray-600"><span class="font-medium">To:</span> <span id="view-receiver"></span></p>
+              <div id="view-cc-container" class="hidden">
+                <p class="text-sm text-gray-600"><span class="font-medium">CC:</span> <span id="view-cc"></span></p>
+              </div>
+              <p class="text-sm text-gray-600"><span class="font-medium">Subject:</span> <span id="view-subject" class="font-semibold"></span></p>
+            </div>
+
+            <!-- Email body with more space -->
+            <div class="mt-4">
+              <p class="text-sm font-medium text-gray-600">Message</p>
+              <div id="view-body" class="mt-1 p-4 bg-gray-50 rounded-md text-sm text-gray-900 shadow-inner max-h-[600px] overflow-y-auto">
+                <div id="current-message"></div>
+                <div id="previous-messages" class="mt-4 pt-4 border-t border-gray-300 hidden"></div>
+                <button id="toggle-previous" class="text-primary-600 hover:text-primary-700 mt-2 text-sm font-medium hidden">Show previous messages</button>
+              </div>
+            </div>
+
+            <div id="view-attachment-container" class="mt-4 hidden">
+              <p class="text-sm font-medium text-gray-600">Attachment</p>
+              <a id="view-attachment" href="#" class="text-sm text-primary-600 hover:text-primary-700 underline"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Fixed footer -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
+        <button type="button" id="closeViewModal" data-bs-dismiss="modal"
+                class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-150">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom JavaScript -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const viewModal = document.getElementById('viewEmailModal');
+    const closeButton = document.getElementById('closeViewModal');
+    const togglePreviousButton = document.getElementById('toggle-previous');
+    const previousMessagesDiv = document.getElementById('previous-messages');
+
+    // Improved function to extract CSS and wrap content
+    function formatEmailBody(body) {
+      if (body.trim().startsWith('<html') || body.trim().startsWith('<!DOCTYPE')) {
+        return body;
+      }
+      const lines = body.split('\n');
+      let cssLines = [];
+      let contentStart = 0;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('@') || line.match(/^[a-zA-Z0-9.*#]+ \{/)) {
+          cssLines.push(line);
+        } else {
+          contentStart = i;
+          break;
+        }
+      }
+      const css = cssLines.join('\n');
+      const content = lines.slice(contentStart).join('\n');
+      return `
+        <html>
+          <head>
+            <style>
+              ${css}
+              /* Fallback styles */
+              body { 
+                font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+                font-size: 14px; 
+                background: #ffffff; 
+                padding: 20px; 
+                color: #333; 
+              }
+              a { color: #1e90ff; text-decoration: underline; }
+              table { width: 100%; border-collapse: collapse; }
+              td, th { padding: 12px; border: 1px solid #cdcdcd; }
+              th { background: #f8f8f8; }
+            </style>
+          </head>
+          <body>
+            ${content}
+          </body>
+        </html>
+      `;
+    }
+
+    // Split email body into current and previous parts
+    function processEmailBody(body) {
+      const formattedBody = formatEmailBody(body);
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(formattedBody, 'text/html');
+      const bodyText = doc.body.innerHTML;
+      const lines = bodyText.split('\n');
+      let splitIndex = -1;
+      for (let i = lines.length - 1; i >= 0; i--) {
+        if (/^On .+ wrote:$/.test(lines[i].trim())) {
+          splitIndex = i;
+          break;
+        }
+      }
+      if (splitIndex !== -1) {
+        const currentMessage = lines.slice(0, splitIndex).join('\n');
+        const previousMessages = lines.slice(splitIndex).join('\n');
+        return { currentMessage, previousMessages };
+      } else {
+        return { currentMessage: bodyText, previousMessages: '' };
+      }
+    }
+
+    // Populate and show modal
+    window.showEmailDetails = function(emailData) {
+      document.getElementById('view-sender').textContent = emailData.sender || '';
+      document.getElementById('view-receiver').textContent = emailData.receiver || '';
+      document.getElementById('view-subject').textContent = emailData.subject || '';
+      document.getElementById('view-time').textContent = emailData.time || '';
+
+      const ccContainer = document.getElementById('view-cc-container');
+      if (emailData.cc) {
+        ccContainer.classList.remove('hidden');
+        document.getElementById('view-cc').textContent = emailData.cc;
+      } else {
+        ccContainer.classList.add('hidden');
+      }
+
+      const attachmentContainer = document.getElementById('view-attachment-container');
+      const attachmentLink = document.getElementById('view-attachment');
+      if (emailData.attachment) {
+        attachmentContainer.classList.remove('hidden');
+        attachmentLink.href = emailData.attachment;
+        attachmentLink.textContent = 'Download Attachment';
+      } else {
+        attachmentContainer.classList.add('hidden');
+      }
+
+      // Process and display email body
+      const { currentMessage, previousMessages } = processEmailBody(emailData.body || '');
+      document.getElementById('current-message').innerHTML = currentMessage;
+      if (previousMessages) {
+        document.getElementById('previous-messages').innerHTML = previousMessages;
+        previousMessagesDiv.classList.add('hidden');
+        togglePreviousButton.classList.remove('hidden');
+        togglePreviousButton.textContent = 'Show previous messages';
+      } else {
+        previousMessagesDiv.classList.add('hidden');
+        togglePreviousButton.classList.add('hidden');
+      }
+
+      viewModal.classList.remove('hidden');
+    };
+
+    // Close modal
+    closeButton.addEventListener('click', function() {
+      viewModal.classList.add('hidden');
+    });
+
+    // Close when clicking outside
+    viewModal.addEventListener('click', function(event) {
+      if (event.target === viewModal) {
+        viewModal.classList.add('hidden');
+      }
+    });
+
+    // Toggle previous messages
+    togglePreviousButton.addEventListener('click', function() {
+      if (previousMessagesDiv.classList.contains('hidden')) {
+        previousMessagesDiv.classList.remove('hidden');
+        this.textContent = 'Hide previous messages';
+      } else {
+        previousMessagesDiv.classList.add('hidden');
+        this.textContent = 'Show previous messages';
+      }
+    });
+  });
+</script>

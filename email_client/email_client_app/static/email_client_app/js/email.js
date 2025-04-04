@@ -31,7 +31,6 @@ function hideLoadingIndicator() {
         loadingIndicator.remove();
     }
 }
-
 function loadInbox() {
     showLoadingIndicator();
     
@@ -45,12 +44,13 @@ function loadInbox() {
             data.emails.forEach(email => {
                 const li = document.createElement('li');
                 li.className = `cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${email.unread ? 'bg-blue-50' : ''}`;
+                // Add data attributes
+                li.dataset.id = email.id;
+                li.dataset.folder = "INBOX";
                 
-                // Create a single flex container for the entire row
                 const row = document.createElement('div');
                 row.className = "flex px-6 py-3 items-center";
                 
-                // Create and append each cell
                 const senderCell = document.createElement('div');
                 senderCell.className = "w-1/4 font-medium truncate";
                 senderCell.textContent = email.sender;
@@ -67,27 +67,20 @@ function loadInbox() {
                 timeCell.className = "w-1/6 text-right text-sm text-gray-500";
                 timeCell.textContent = email.time;
                 
-                // Append all cells to the row
                 row.appendChild(senderCell);
                 row.appendChild(subjectCell);
                 row.appendChild(snippetCell);
                 row.appendChild(timeCell);
                 
-                // Append the row to the list item
                 li.appendChild(row);
-                
-                // Insert at the beginning of the list to keep newest emails on top
                 emailList.insertBefore(li, emailList.firstChild);
             });
             
             unreadCount.textContent = data.unread_count;
-            
-            // Set active navigation
             setActiveNavigation('inboxBtn');
         })
         .catch(error => {
             console.error('Error loading inbox:', error);
-            // Show error message in the list
             const emailList = document.getElementById('email-list');
             emailList.innerHTML = '<div class="p-4 text-red-500">Failed to load emails. Please try again.</div>';
         })
@@ -108,12 +101,13 @@ function loadSent() {
             data.emails.forEach(email => {
                 const li = document.createElement('li');
                 li.className = 'cursor-pointer hover:bg-gray-50 transition-colors duration-150';
+                // Add data attributes
+                li.dataset.id = email.id;
+                li.dataset.folder = "[Gmail]/Sent Mail";
                 
-                // Create a single flex container for the entire row
                 const row = document.createElement('div');
                 row.className = "flex px-6 py-3 items-center";
                 
-                // Create and append each cell
                 const senderCell = document.createElement('div');
                 senderCell.className = "w-1/4 font-medium truncate";
                 senderCell.textContent = email.sender;
@@ -130,25 +124,19 @@ function loadSent() {
                 timeCell.className = "w-1/6 text-right text-sm text-gray-500";
                 timeCell.textContent = email.time;
                 
-                // Append all cells to the row
                 row.appendChild(senderCell);
                 row.appendChild(subjectCell);
                 row.appendChild(snippetCell);
                 row.appendChild(timeCell);
                 
-                // Append the row to the list item
                 li.appendChild(row);
-                
-                // Insert at the beginning of the list to keep newest emails on top
                 emailList.insertBefore(li, emailList.firstChild);
             });
             
-            // Set active navigation
             setActiveNavigation('sentBtn');
         })
         .catch(error => {
             console.error('Error loading sent:', error);
-            // Show error message in the list
             const emailList = document.getElementById('email-list');
             emailList.innerHTML = '<div class="p-4 text-red-500">Failed to load emails. Please try again.</div>';
         })
@@ -170,12 +158,13 @@ function loadDrafts() {
             data.emails.forEach(email => {
                 const li = document.createElement('li');
                 li.className = 'cursor-pointer hover:bg-gray-50 transition-colors duration-150';
+                // Add data attributes
+                li.dataset.id = email.id;
+                li.dataset.folder = "[Gmail]/Drafts";
                 
-                // Create a single flex container for the entire row
                 const row = document.createElement('div');
                 row.className = "flex px-6 py-3 items-center";
                 
-                // Create and append each cell
                 const senderCell = document.createElement('div');
                 senderCell.className = "w-1/4 font-medium truncate";
                 senderCell.textContent = email.sender;
@@ -192,27 +181,20 @@ function loadDrafts() {
                 timeCell.className = "w-1/6 text-right text-sm text-gray-500";
                 timeCell.textContent = email.time;
                 
-                // Append all cells to the row
                 row.appendChild(senderCell);
                 row.appendChild(subjectCell);
                 row.appendChild(snippetCell);
                 row.appendChild(timeCell);
                 
-                // Append the row to the list item
                 li.appendChild(row);
-                
-                // Insert at the beginning of the list to keep newest emails on top
                 emailList.insertBefore(li, emailList.firstChild);
             });
             
             draftCount.textContent = data.draft_count;
-            
-            // Set active navigation
             setActiveNavigation('draftsBtn');
         })
         .catch(error => {
             console.error('Error loading drafts:', error);
-            // Show error message in the list
             const emailList = document.getElementById('email-list');
             emailList.innerHTML = '<div class="p-4 text-red-500">Failed to load emails. Please try again.</div>';
         })
@@ -353,5 +335,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => alert('Error saving draft: ' + error));
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const emailList = document.getElementById('email-list');
+  
+    emailList.addEventListener('click', function(e) {
+        const emailItem = e.target.closest('li');
+        if (emailItem) {
+            const id = emailItem.dataset.id;
+            const folder = emailItem.dataset.folder;
+            if (id && folder) {
+                fetch(`/get_email_detail/?id=${encodeURIComponent(id)}&folder=${encodeURIComponent(folder)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.email) {
+                            window.showEmailDetails(data.email);
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching email details:', error);
+                        alert('Failed to load email details.');
+                    });
+            }
+        }
     });
 });
