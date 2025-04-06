@@ -10,6 +10,22 @@ import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+# Add this function after the imports and before other functions
+
+def get_imap_connection(folder=None):
+    """
+    Helper function to establish IMAP connection and optionally select a folder
+    Returns: (connection, status) tuple
+    """
+    try:
+        mail = imaplib.IMAP4_SSL("imap.gmail.com")
+        mail.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
+        if folder:
+            mail.select(f'"{folder}"')
+        return mail, True
+    except Exception as e:
+        return None, str(e)
+
 # Helper function to get email snippet (unchanged)
 def get_email_snippet(email_message, max_length):
     try:
@@ -82,11 +98,11 @@ def send_email(request):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
-# Modified get_inbox to include email ID
+# Modified get_inbox to use get_imap_connection
 def get_inbox(request):
-    mail = imaplib.IMAP4_SSL("imap.gmail.com")
-    mail.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
-    mail.select("INBOX")
+    mail, status = get_imap_connection("INBOX")
+    if not isinstance(status, bool):
+        return JsonResponse({'status': 'error', 'message': status}, status=500)
 
     status, unread = mail.search(None, "UNSEEN")
     unread_count = len(unread[0].split()) if status == 'OK' and unread[0] else 0
@@ -108,7 +124,7 @@ def get_inbox(request):
         email_message = BytesParser().parsebytes(raw_email)
         is_unread = b"\\Seen" not in flags
         emails.append({
-            'id': email_id.decode(),  # Added email ID
+            'id': email_id.decode(),
             'sender': email_message['from'],
             'subject': email_message['subject'] or '(No Subject)',
             'snippet': get_email_snippet(email_message, 50),
@@ -119,11 +135,11 @@ def get_inbox(request):
     mail.logout()
     return JsonResponse({'emails': emails, 'unread_count': unread_count})
 
-# Modified get_sent to include email ID
+# Modified get_sent to use get_imap_connection
 def get_sent(request):
-    mail = imaplib.IMAP4_SSL("imap.gmail.com")
-    mail.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
-    mail.select(r'"[Gmail]/Sent Mail"')
+    mail, status = get_imap_connection("[Gmail]/Sent Mail")
+    if not isinstance(status, bool):
+        return JsonResponse({'status': 'error', 'message': status}, status=500)
 
     status, messages = mail.search(None, "ALL")
     if status != 'OK' or not messages[0]:
@@ -140,7 +156,7 @@ def get_sent(request):
         raw_email = msg_data[0][1]
         email_message = BytesParser().parsebytes(raw_email)
         emails.append({
-            'id': email_id.decode(),  # Added email ID
+            'id': email_id.decode(),
             'sender': email_message['from'],
             'subject': email_message['subject'] or '(No Subject)',
             'snippet': get_email_snippet(email_message, 50),
@@ -150,11 +166,11 @@ def get_sent(request):
     mail.logout()
     return JsonResponse({'emails': emails})
 
-# Modified get_drafts to include email ID
+# Modified get_drafts to use get_imap_connection
 def get_drafts(request):
-    mail = imaplib.IMAP4_SSL("imap.gmail.com")
-    mail.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
-    mail.select(r'"[Gmail]/Drafts"')
+    mail, status = get_imap_connection("[Gmail]/Drafts")
+    if not isinstance(status, bool):
+        return JsonResponse({'status': 'error', 'message': status}, status=500)
 
     status, messages = mail.search(None, "ALL")
     if status != 'OK' or not messages[0]:
@@ -171,7 +187,7 @@ def get_drafts(request):
         raw_email = msg_data[0][1]
         email_message = BytesParser().parsebytes(raw_email)
         emails.append({
-            'id': email_id.decode(),  # Added email ID
+            'id': email_id.decode(),
             'sender': email_message['from'],
             'subject': email_message['subject'] or '(No Subject)',
             'snippet': get_email_snippet(email_message, 50),
@@ -182,18 +198,18 @@ def get_drafts(request):
     mail.logout()
     return JsonResponse({'emails': emails, 'draft_count': draft_count})
 
-# New view to get full email details
+# Modified get_email_detail to use get_imap_connection
 def get_email_detail(request):
     if request.method == 'GET':
         email_id = request.GET.get('id')
-        folder = request.GET.get('folder', 'INBOX')  # Default to INBOX
+        folder = request.GET.get('folder', 'INBOX')
 
         if not email_id:
             return JsonResponse({'status': 'error', 'message': 'No email ID provided'}, status=400)
 
-        mail = imaplib.IMAP4_SSL("imap.gmail.com")
-        mail.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
-        mail.select(f'"{folder}"')
+        mail, status = get_imap_connection(folder)
+        if not isinstance(status, bool):
+            return JsonResponse({'status': 'error', 'message': status}, status=500)
 
         status, msg_data = mail.fetch(email_id, "(RFC822)")
         if status != 'OK' or not msg_data[0]:
@@ -210,7 +226,7 @@ def get_email_detail(request):
             'subject': email_message['subject'] or '(No Subject)',
             'body': get_full_email_body(email_message),
             'time': email_message['date'] or 'Unknown',
-            'attachment': None  # Add attachment handling if needed
+            'attachment': None
         }
 
         mail.logout()
@@ -219,14 +235,12 @@ def get_email_detail(request):
 
 # New helper function to get the full email body
 def get_full_email_body(email_message):
-    # If it’s a single-part email (not multipart)
     if not email_message.is_multipart():
         content = email_message.get_payload(decode=True)
         if content is None:
             return ''
         return content.decode('utf-8', errors='replace') if isinstance(content, bytes) else str(content)
     
-    # For multipart emails, walk through all parts
     html_content = None
     plain_content = None
     for part in email_message.walk():
@@ -235,22 +249,20 @@ def get_full_email_body(email_message):
             content = part.get_payload(decode=True)
             if content:
                 html_content = content.decode('utf-8', errors='replace') if isinstance(content, bytes) else str(content)
-        elif content_type == 'text/plain' and not html_content:  # Fallback only if no HTML
+        elif content_type == 'text/plain' and not html_content:
             content = part.get_payload(decode=True)
             if content:
                 plain_content = content.decode('utf-8', errors='replace') if isinstance(content, bytes) else str(content)
     
-    # Return HTML if available, otherwise plain text
     return html_content if html_content else plain_content if plain_content else ''
 
+# Modified save_draft_to_imap to use get_imap_connection
 def save_draft_to_imap(receiver, subject, body, cc=None):
     try:
-        # Establish IMAP connection and save draft
-        mail = imaplib.IMAP4_SSL("imap.gmail.com")
-        mail.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
-        
-        mail.select(r'"[Gmail]/Drafts"')  
-        
+        mail, status = get_imap_connection("[Gmail]/Drafts")
+        if not isinstance(status, bool):
+            return {"status": "error", "message": status}
+
         msg = MIMEMultipart()
         msg['From'] = settings.EMAIL_SENDER
         msg['To'] = receiver
@@ -268,12 +280,11 @@ def save_draft_to_imap(receiver, subject, body, cc=None):
             return {"status": "error", "message": f"Failed to save draft: {response}"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
-    
+
 # @csrf_exempt
 def save_draft(request):
     if request.method == 'POST':
         try:
-            # Check if the content type is application/json
             if request.content_type == 'application/json':
                 data = json.loads(request.body.decode('utf-8'))
                 receiver = data.get('receiver', '')
@@ -281,7 +292,6 @@ def save_draft(request):
                 body = data.get('body', '')
                 cc = data.get('cc', '')
             else:
-                # Fall back to form data
                 receiver = request.POST.get('receiver', '')
                 subject = request.POST.get('subject', '')
                 body = request.POST.get('body', '')

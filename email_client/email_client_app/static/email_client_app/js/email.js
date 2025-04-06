@@ -1,384 +1,239 @@
 // email_client_app/static/email_client_app/js/email.js
-function showLoadingIndicator() {
-    const emailList = document.getElementById('email-list');
-    emailList.innerHTML = '';
 
-    // Create loading indicator
-    const loadingDiv = document.createElement('div');
-    loadingDiv.id = 'loading-indicator';
-    loadingDiv.className = 'flex justify-center items-center py-10';
+// UI Helper Functions
+const UI = {
+    showLoadingIndicator() {
+        const emailList = document.getElementById('email-list');
+        emailList.innerHTML = '';
 
-    // Create spinning circle animation
-    const spinner = document.createElement('div');
-    spinner.className = 'animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500';
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loading-indicator';
+        loadingDiv.className = 'flex justify-center items-center py-10';
 
-    // Add loading text
-    const loadingText = document.createElement('span');
-    loadingText.className = 'ml-3 text-gray-600';
-    loadingText.textContent = 'Loading emails...';
+        const spinner = document.createElement('div');
+        spinner.className = 'animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500';
 
-    // Assemble the loading indicator
-    loadingDiv.appendChild(spinner);
-    loadingDiv.appendChild(loadingText);
+        const loadingText = document.createElement('span');
+        loadingText.className = 'ml-3 text-gray-600';
+        loadingText.textContent = 'Loading emails...';
 
-    // Add to email list container
-    emailList.appendChild(loadingDiv);
-}
+        loadingDiv.appendChild(spinner);
+        loadingDiv.appendChild(loadingText);
+        emailList.appendChild(loadingDiv);
+    },
 
-function hideLoadingIndicator() {
-    const loadingIndicator = document.getElementById('loading-indicator');
-    if (loadingIndicator) {
-        loadingIndicator.remove();
-    }
-}
-function loadInbox() {
-    showLoadingIndicator();
-
-    fetch("/inbox/")
-        .then(response => response.json())
-        .then(data => {
-            const emailList = document.getElementById('email-list');
-            const unreadCount = document.getElementById('unread-count');
-            emailList.innerHTML = '';
-
-            data.emails.forEach(email => {
-                const li = document.createElement('li');
-                li.className = `cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${email.unread ? 'bg-blue-50' : ''}`;
-                // Add data attributes
-                li.dataset.id = email.id;
-                li.dataset.folder = "INBOX";
-
-                const row = document.createElement('div');
-                row.className = "flex px-6 py-3 items-center";
-
-                const senderCell = document.createElement('div');
-                senderCell.className = "w-1/4 font-medium truncate";
-                senderCell.textContent = email.sender;
-
-                const subjectCell = document.createElement('div');
-                subjectCell.className = "w-1/3 truncate";
-                subjectCell.textContent = email.subject;
-
-                const snippetCell = document.createElement('div');
-                snippetCell.className = "w-1/4 text-gray-500 truncate";
-                snippetCell.textContent = email.snippet;
-
-                const timeCell = document.createElement('div');
-                timeCell.className = "w-1/6 text-right text-sm text-gray-500";
-                timeCell.textContent = email.time;
-
-                row.appendChild(senderCell);
-                row.appendChild(subjectCell);
-                row.appendChild(snippetCell);
-                row.appendChild(timeCell);
-
-                li.appendChild(row);
-                emailList.insertBefore(li, emailList.firstChild);
-            });
-
-            unreadCount.textContent = data.unread_count;
-            setActiveNavigation('inboxBtn');
-        })
-        .catch(error => {
-            console.error('Error loading inbox:', error);
-            const emailList = document.getElementById('email-list');
-            emailList.innerHTML = '<div class="p-4 text-red-500">Failed to load emails. Please try again.</div>';
-        })
-        .finally(() => {
-            hideLoadingIndicator();
-        });
-}
-
-function loadSent() {
-    showLoadingIndicator();
-
-    fetch("/sent/")
-        .then(response => response.json())
-        .then(data => {
-            const emailList = document.getElementById('email-list');
-            emailList.innerHTML = '';
-
-            data.emails.forEach(email => {
-                const li = document.createElement('li');
-                li.className = 'cursor-pointer hover:bg-gray-50 transition-colors duration-150';
-                // Add data attributes
-                li.dataset.id = email.id;
-                li.dataset.folder = "[Gmail]/Sent Mail";
-
-                const row = document.createElement('div');
-                row.className = "flex px-6 py-3 items-center";
-
-                const senderCell = document.createElement('div');
-                senderCell.className = "w-1/4 font-medium truncate";
-                senderCell.textContent = email.sender;
-
-                const subjectCell = document.createElement('div');
-                subjectCell.className = "w-1/3 truncate";
-                subjectCell.textContent = email.subject;
-
-                const snippetCell = document.createElement('div');
-                snippetCell.className = "w-1/4 text-gray-500 truncate";
-                snippetCell.textContent = email.snippet;
-
-                const timeCell = document.createElement('div');
-                timeCell.className = "w-1/6 text-right text-sm text-gray-500";
-                timeCell.textContent = email.time;
-
-                row.appendChild(senderCell);
-                row.appendChild(subjectCell);
-                row.appendChild(snippetCell);
-                row.appendChild(timeCell);
-
-                li.appendChild(row);
-                emailList.insertBefore(li, emailList.firstChild);
-            });
-
-            setActiveNavigation('sentBtn');
-        })
-        .catch(error => {
-            console.error('Error loading sent:', error);
-            const emailList = document.getElementById('email-list');
-            emailList.innerHTML = '<div class="p-4 text-red-500">Failed to load emails. Please try again.</div>';
-        })
-        .finally(() => {
-            hideLoadingIndicator();
-        });
-}
-
-function loadDrafts() {
-    showLoadingIndicator();
-
-    fetch("/drafts/")
-        .then(response => response.json())
-        .then(data => {
-            const emailList = document.getElementById('email-list');
-            const draftCount = document.getElementById('draft-count');
-            emailList.innerHTML = '';
-
-            data.emails.forEach(email => {
-                const li = document.createElement('li');
-                li.className = 'cursor-pointer hover:bg-gray-50 transition-colors duration-150';
-                // Add data attributes
-                li.dataset.id = email.id;
-                li.dataset.folder = "[Gmail]/Drafts";
-
-                const row = document.createElement('div');
-                row.className = "flex px-6 py-3 items-center";
-
-                const senderCell = document.createElement('div');
-                senderCell.className = "w-1/4 font-medium truncate";
-                senderCell.textContent = email.sender;
-
-                const subjectCell = document.createElement('div');
-                subjectCell.className = "w-1/3 truncate";
-                subjectCell.textContent = email.subject;
-
-                const snippetCell = document.createElement('div');
-                snippetCell.className = "w-1/4 text-gray-500 truncate";
-                snippetCell.textContent = email.snippet;
-
-                const timeCell = document.createElement('div');
-                timeCell.className = "w-1/6 text-right text-sm text-gray-500";
-                timeCell.textContent = email.time;
-
-                row.appendChild(senderCell);
-                row.appendChild(subjectCell);
-                row.appendChild(snippetCell);
-                row.appendChild(timeCell);
-
-                li.appendChild(row);
-                emailList.insertBefore(li, emailList.firstChild);
-            });
-
-            draftCount.textContent = data.draft_count;
-            setActiveNavigation('draftsBtn');
-        })
-        .catch(error => {
-            console.error('Error loading drafts:', error);
-            const emailList = document.getElementById('email-list');
-            emailList.innerHTML = '<div class="p-4 text-red-500">Failed to load emails. Please try again.</div>';
-        })
-        .finally(() => {
-            hideLoadingIndicator();
-        });
-}
-
-// Function to set active navigation item
-function setActiveNavigation(activeId) {
-    // Remove active class from all navigation items
-    const navItems = document.querySelectorAll('nav a');
-    navItems.forEach(item => {
-        item.classList.remove('bg-primary-50', 'text-primary-700');
-        item.classList.add('text-gray-700', 'hover:bg-gray-100', 'hover:text-gray-900');
-    });
-
-    // Add active class to selected item
-    const activeItem = document.getElementById(activeId);
-    if (activeItem) {
-        activeItem.classList.remove('text-gray-700', 'hover:bg-gray-100', 'hover:text-gray-900');
-        activeItem.classList.add('bg-primary-50', 'text-primary-700');
-    }
-}
-
-// Handle modal functionality
-function setupComposeModal() {
-    const modal = document.getElementById('composeModal');
-    const openButton = document.getElementById('compose');
-    const closeButtons = modal.querySelectorAll('[data-bs-dismiss="modal"]');
-
-    // Open modal
-    if (openButton) {
-        openButton.addEventListener('click', function () {
-            modal.classList.remove('hidden');
-        });
-    }
-
-    // Close modal
-    closeButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            modal.classList.add('hidden');
-        });
-    });
-
-    // Close when clicking outside
-    modal.addEventListener('click', function (event) {
-        if (event.target === modal) {
-            modal.classList.add('hidden');
+    hideLoadingIndicator() {
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.remove();
         }
-    });
-}
+    },
 
-document.addEventListener('DOMContentLoaded', function () {
-    // Initial load
-    loadInbox();
+    setActiveNavigation(activeId) {
+        const navItems = document.querySelectorAll('nav a');
+        navItems.forEach(item => {
+            item.classList.remove('bg-primary-50', 'text-primary-700');
+            item.classList.add('text-gray-700', 'hover:bg-gray-100', 'hover:text-gray-900');
+        });
 
-    // Setup navigation events
-    document.getElementById('inboxBtn').addEventListener('click', function (e) {
-        e.preventDefault();
-        loadInbox();
-    });
+        const activeItem = document.getElementById(activeId);
+        if (activeItem) {
+            activeItem.classList.remove('text-gray-700', 'hover:bg-gray-100', 'hover:text-gray-900');
+            activeItem.classList.add('bg-primary-50', 'text-primary-700');
+        }
+    },
 
-    document.getElementById('sentBtn').addEventListener('click', function (e) {
-        e.preventDefault();
-        loadSent();
-    });
+    createEmailListItem(email, folder) {
+        const li = document.createElement('li');
+        li.className = `cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${email.unread ? 'bg-blue-50' : ''}`;
+        li.dataset.id = email.id;
+        li.dataset.folder = folder;
 
-    document.getElementById('draftsBtn').addEventListener('click', function (e) {
-        e.preventDefault();
-        loadDrafts();
-    });
+        const row = document.createElement('div');
+        row.className = "flex px-6 py-3 items-center";
 
-    // Setup modal
-    setupComposeModal();
+        const cells = [
+            { content: email.sender, className: "w-1/4 font-medium truncate" },
+            { content: email.subject, className: "w-1/3 truncate" },
+            { content: email.snippet, className: "w-1/4 text-gray-500 truncate" },
+            { content: email.time, className: "w-1/6 text-right text-sm text-gray-500" }
+        ];
 
-    // Email sending functionality
-    document.getElementById('sendEmail').addEventListener('click', function () {
-        const form = document.getElementById('composeForm');
+        cells.forEach(cell => {
+            const div = document.createElement('div');
+            div.className = cell.className;
+            div.textContent = cell.content;
+            row.appendChild(div);
+        });
+
+        li.appendChild(row);
+        return li;
+    }
+};
+
+// Email Operations
+const EmailOperations = {
+    async loadEmails(endpoint, folder, options = {}) {
+        UI.showLoadingIndicator();
+        try {
+            UI.setActiveNavigation(options.activeButton);
+            const response = await fetch(endpoint);
+            const data = await response.json();
+            const emailList = document.getElementById('email-list');
+            emailList.innerHTML = '';
+
+            data.emails.forEach(email => {
+                const li = UI.createEmailListItem(email, folder);
+                emailList.insertBefore(li, emailList.firstChild);
+            });
+
+            if (options.updateCount) {
+                const countElement = document.getElementById(options.countElement);
+                if (countElement) {
+                    countElement.textContent = data[options.countProperty];
+                }
+            }
+        } catch (error) {
+            console.error(`Error loading ${folder}:`, error);
+            document.getElementById('email-list').innerHTML =
+                '<div class="p-4 text-red-500">Failed to load emails. Please try again.</div>';
+        } finally {
+            UI.hideLoadingIndicator();
+        }
+    },
+
+    async sendEmail(form) {
         const formData = new FormData(form);
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-        fetch("/send-email/", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                    // Hide modal
-                    document.getElementById('composeModal').classList.add('hidden');
-                    // Clear form
-                    form.reset();
-                    // Reload appropriate list
-                    loadSent();
-                } else {
-                    alert('Error: ' + data.message);
+        try {
+            const response = await fetch("/send-email/", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-            })
-            .catch(error => alert('Error sending email: ' + error));
-    });
-
-    // Add save draft functionality
-    document.getElementById('saveDraft').addEventListener('click', function () {
-        const form = document.getElementById('composeForm');
-        const receiver = document.getElementById('receiver').value;
-        const subject = document.getElementById('subject').value;
-        const body = document.getElementById('body').value || document.getElementById('body').value;
-        const cc = document.getElementById('cc').value;
-    
-        // Create data object
-        const draftData = {
-            receiver: receiver,
-            subject: subject,
-            body: body,
-            cc: cc
-        };
-    
-        fetch('/save-draft/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify(draftData)
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Close the compose modal
-                    document.getElementById('composeModal').classList.add('hidden');
-                    // Reset the form
-                    form.reset();
-                    // Show the draft email list
-                    loadDrafts();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error details:', error);
-                alert('Error saving draft: ' + error);
             });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                alert(data.message);
+                document.getElementById('composeModal').classList.add('hidden');
+                form.reset();
+                this.loadEmails('/sent/', '[Gmail]/Sent Mail', { activeButton: 'sentBtn' });
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error sending email: ' + error);
+        }
+    },
+
+    async saveDraft(form) {
+        const draftData = {
+            receiver: form.receiver.value,
+            subject: form.subject.value,
+            body: form.body.value,
+            cc: form.cc.value
+        };
+
+        try {
+            const response = await fetch('/save-draft/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(draftData)
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                document.getElementById('composeModal').classList.add('hidden');
+                form.reset();
+                this.loadEmails('/drafts/', '[Gmail]/Drafts', {
+                    activeButton: 'draftsBtn',
+                    updateCount: true,
+                    countElement: 'draft-count',
+                    countProperty: 'draft_count'
+                });
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error details:', error);
+            alert('Error saving draft: ' + error);
+        }
+    }
+};
+
+// Initialize Application
+document.addEventListener('DOMContentLoaded', function () {
+    // Initial load
+    EmailOperations.loadEmails('/inbox/', 'INBOX', {
+        activeButton: 'inboxBtn',
+        updateCount: true,
+        countElement: 'unread-count',
+        countProperty: 'unread_count'
     });
 
-    document.getElementById('deleteDraft').addEventListener('click', function () {
-        const form = document.getElementById('composeForm');
+    // Setup navigation events
+    const navigationHandlers = {
+        'inboxBtn': () => EmailOperations.loadEmails('/inbox/', 'INBOX', {
+            activeButton: 'inboxBtn',
+            updateCount: true,
+            countElement: 'unread-count',
+            countProperty: 'unread_count'
+        }),
+        'sentBtn': () => EmailOperations.loadEmails('/sent/', '[Gmail]/Sent Mail', {
+            activeButton: 'sentBtn'
+        }),
+        'draftsBtn': () => EmailOperations.loadEmails('/drafts/', '[Gmail]/Drafts', {
+            activeButton: 'draftsBtn',
+            updateCount: true,
+            countElement: 'draft-count',
+            countProperty: 'draft_count'
+        })
+    };
+
+    Object.entries(navigationHandlers).forEach(([id, handler]) => {
+        document.getElementById(id).addEventListener('click', (e) => {
+            e.preventDefault();
+            handler();
+        });
+    });
+
+    // Setup compose modal events
+    const composeForm = document.getElementById('composeForm');
+    document.getElementById('sendEmail').addEventListener('click', () =>
+        EmailOperations.sendEmail(composeForm));
+    document.getElementById('saveDraft').addEventListener('click', () =>
+        EmailOperations.saveDraft(composeForm));
+    document.getElementById('deleteDraft').addEventListener('click', () => {
         if (confirm("Are you sure you want to discard this draft?")) {
-            // Clear the current form
-            form.reset();
-            // Close the compose modal
+            composeForm.reset();
             document.getElementById('composeModal').classList.add('hidden');
         }
     });
 
-
-    // check email details here
-    const emailList = document.getElementById('email-list');
-
-    emailList.addEventListener('click', function (e) {
+    // Setup email details handler
+    document.getElementById('email-list').addEventListener('click', function (e) {
         const emailItem = e.target.closest('li');
-        if (emailItem) {
-            const id = emailItem.dataset.id;
-            const folder = emailItem.dataset.folder;
-            if (id && folder) {
-                fetch(`/get_email_detail/?id=${encodeURIComponent(id)}&folder=${encodeURIComponent(folder)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.email) {
-                            window.showEmailDetails(data.email);
-                        } else {
-                            alert('Error: ' + data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching email details:', error);
-                        alert('Failed to load email details.');
-                    });
-            }
+        if (emailItem?.dataset.id && emailItem?.dataset.folder) {
+            fetch(`/get_email_detail/?id=${encodeURIComponent(emailItem.dataset.id)}&folder=${encodeURIComponent(emailItem.dataset.folder)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.email) {
+                        window.showEmailDetails(data.email);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching email details:', error);
+                    alert('Failed to load email details.');
+                });
         }
     });
 });
