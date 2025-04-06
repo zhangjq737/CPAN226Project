@@ -7,3 +7,5 @@
 3. proper close pop-up window button
 
 ### Bugs
+1. remove all debug code
+2. remove built-in alert window

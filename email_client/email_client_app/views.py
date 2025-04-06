@@ -4,7 +4,6 @@ from django.conf import settings
 import smtplib
 import ssl
 from email.message import EmailMessage
-import os
 from email.parser import BytesParser
 import imaplib
 
@@ -34,32 +33,6 @@ def get_email_snippet(email_message, max_length):
             return text[:max_length].strip()
     except Exception as e:
         print(f"Error in snippet extraction: {e}")
-        return ''
-
-# New helper function to get the full email body
-def get_full_email_body(email_message):
-    try:
-        if email_message.is_multipart():
-            for part in email_message.walk():
-                content_type = part.get_content_type()
-                if content_type == 'text/plain':
-                    content = part.get_payload(decode=True)
-                    if content:
-                        if isinstance(content, bytes):
-                            return content.decode('utf-8', errors='replace')
-                        else:
-                            return str(content)
-            return str(email_message.get_payload(0))
-        else:
-            content = email_message.get_payload(decode=True)
-            if content is None:
-                return ''
-            if isinstance(content, bytes):
-                return content.decode('utf-8', errors='replace')
-            else:
-                return str(content)
-    except Exception as e:
-        print(f"Error in full body extraction: {e}")
         return ''
 
 # Existing views (unchanged)
@@ -120,7 +93,7 @@ def get_inbox(request):
         mail.logout()
         return JsonResponse({'emails': [], 'unread_count': unread_count})
 
-    email_ids = messages[0].split()[-10:]
+    email_ids = messages[0].split()[-50:]
     emails = []
 
     for email_id in email_ids:
@@ -240,3 +213,29 @@ def get_email_detail(request):
         mail.logout()
         return JsonResponse({'email': email_data})
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+# New helper function to get the full email body
+def get_full_email_body(email_message):
+    # If it’s a single-part email (not multipart)
+    if not email_message.is_multipart():
+        content = email_message.get_payload(decode=True)
+        if content is None:
+            return ''
+        return content.decode('utf-8', errors='replace') if isinstance(content, bytes) else str(content)
+    
+    # For multipart emails, walk through all parts
+    html_content = None
+    plain_content = None
+    for part in email_message.walk():
+        content_type = part.get_content_type()
+        if content_type == 'text/html':
+            content = part.get_payload(decode=True)
+            if content:
+                html_content = content.decode('utf-8', errors='replace') if isinstance(content, bytes) else str(content)
+        elif content_type == 'text/plain' and not html_content:  # Fallback only if no HTML
+            content = part.get_payload(decode=True)
+            if content:
+                plain_content = content.decode('utf-8', errors='replace') if isinstance(content, bytes) else str(content)
+    
+    # Return HTML if available, otherwise plain text
+    return html_content if html_content else plain_content if plain_content else ''
