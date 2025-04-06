@@ -6,6 +6,9 @@ import ssl
 from email.message import EmailMessage
 from email.parser import BytesParser
 import imaplib
+import json
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # Helper function to get email snippet (unchanged)
 def get_email_snippet(email_message, max_length):
@@ -239,3 +242,55 @@ def get_full_email_body(email_message):
     
     # Return HTML if available, otherwise plain text
     return html_content if html_content else plain_content if plain_content else ''
+
+def save_draft_to_imap(receiver, subject, body, cc=None):
+    try:
+        # Establish IMAP connection and save draft
+        mail = imaplib.IMAP4_SSL("imap.gmail.com")
+        mail.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
+        
+        mail.select(r'"[Gmail]/Drafts"')  
+        
+        msg = MIMEMultipart()
+        msg['From'] = settings.EMAIL_SENDER
+        msg['To'] = receiver
+        if cc:
+            msg['Cc'] = cc
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        msg_data = msg.as_bytes()
+        status, response = mail.append(r'"[Gmail]/Drafts"', '\\Draft', None, msg_data)
+
+        if status == 'OK':
+            return {"status": "success", "message": "Draft saved successfully!"}
+        else:
+            return {"status": "error", "message": f"Failed to save draft: {response}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    
+# @csrf_exempt
+def save_draft(request):
+    if request.method == 'POST':
+        try:
+            # Check if the content type is application/json
+            if request.content_type == 'application/json':
+                data = json.loads(request.body.decode('utf-8'))
+                receiver = data.get('receiver', '')
+                subject = data.get('subject', '')
+                body = data.get('body', '')
+                cc = data.get('cc', '')
+            else:
+                # Fall back to form data
+                receiver = request.POST.get('receiver', '')
+                subject = request.POST.get('subject', '')
+                body = request.POST.get('body', '')
+                cc = request.POST.get('cc', '')
+            
+            result = save_draft_to_imap(receiver, subject, body, cc)
+            return JsonResponse(result)
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())  
+            return JsonResponse({"status": "error", "message": str(e)})
+    return JsonResponse({"status": "error", "message": "Invalid method"})
