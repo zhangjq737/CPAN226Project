@@ -304,12 +304,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Add save draft functionality
     document.getElementById('saveDraft').addEventListener('click', function () {
-        // Get values from the compose form
+        const form = document.getElementById('composeForm');
         const receiver = document.getElementById('receiver').value;
         const subject = document.getElementById('subject').value;
         const body = document.getElementById('body').value || document.getElementById('body').value;
         const cc = document.getElementById('cc').value;
-
+    
         // Create data object
         const draftData = {
             receiver: receiver,
@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function () {
             body: body,
             cc: cc
         };
-
+    
         fetch('/save-draft/', {
             method: 'POST',
             headers: {
@@ -329,7 +329,12 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // alert(data.message);
+                    // Close the compose modal
+                    document.getElementById('composeModal').classList.add('hidden');
+                    // Reset the form
+                    form.reset();
+                    // Show the draft email list
+                    loadDrafts();
                 } else {
                     alert('Error: ' + data.message);
                 }
@@ -341,13 +346,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('deleteDraft').addEventListener('click', function () {
-        // Get the form element
         const form = document.getElementById('composeForm');
-
-        if (confirm("Are you sure you want to clear all content from this email draft?")) {
+        if (confirm("Are you sure you want to discard this draft?")) {
+            // Clear the current form
             form.reset();
-
-            // alert("Email form has been cleared.");
+            // Close the compose modal
+            document.getElementById('composeModal').classList.add('hidden');
         }
     });
 
