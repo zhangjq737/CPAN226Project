@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compose Email</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+<body>
+
+<div class="modal fade" id="composeModal" tabindex="-1" aria-labelledby="composeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="composeModalLabel">New Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="composeForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="sender" class="form-label">From</label>
+                        <input type="email" class="form-control" id="sender" name="sender" value="{{email_sender}}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="receiver" class="form-label">To</label>
+                        <input type="email" class="form-control" id="receiver" name="receiver" placeholder="Enter recipient(s), separated by commas" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cc" class="form-label">CC</label>
+                        <input type="email" class="form-control" id="cc" name="cc" placeholder="Enter CC recipient(s), separated by commas">
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="subject" name="subject" placeholder="Enter subject">
+                    </div>
+                    <div class="mb-3">
+                        <label for="body" class="form-label">Body</label>
+                        <textarea class="form-control" id="body" name="body" rows="5" placeholder="Enter your message"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="attachment" class="form-label">Attachment</label>
+                        <input type="file" class="form-control" id="attachment" name="attachment">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="sendEmail">Send</button>
+                <button type="button" class="btn btn-outline-secondary" id="saveDraft">Save to Draft</button>
+                <button type="button" class="btn btn-outline-danger" id="deleteDraft" data-bs-dismiss="modal">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/email.js' %}"></script>
+
+</body>
+</html>

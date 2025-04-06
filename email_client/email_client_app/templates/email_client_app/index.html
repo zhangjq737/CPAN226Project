@@ -1,0 +1,23 @@
+{% extends 'email_client_app/base.html' %}
+{% load static %}
+{% block sidebar %}
+  {% include 'email_client_app/sidebar.html' %}
+{% endblock %}
+{% block content %}
+  <div class="col-md-9 col-lg-10 p-0">
+    <div class="email-header bg-light p-2 border-bottom">
+      <div class="row fw-bold">
+        <div class="col-3">Sender</div>
+        <div class="col-4">Subject</div>
+        <div class="col-3">Snippet</div>
+        <div class="col-2 text-end">Time</div>
+      </div>
+    </div>
+    <ul class="email-list list-group list-group-flush" id="email-list"></ul>
+  </div>
+{% endblock %}
+{% block modals %}
+  {% include 'email_client_app/compose_modal.html' %}
+{% endblock %}
+{% block scripts %}
+{% endblock %}
