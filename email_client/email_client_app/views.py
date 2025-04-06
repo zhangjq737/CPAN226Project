@@ -146,7 +146,7 @@ def get_sent(request):
         mail.logout()
         return JsonResponse({'emails': []})
 
-    email_ids = messages[0].split()[-10:]
+    email_ids = messages[0].split()[-20:]
     emails = []
 
     for email_id in email_ids:
@@ -177,7 +177,7 @@ def get_drafts(request):
         mail.logout()
         return JsonResponse({'emails': [], 'draft_count': 0})
 
-    email_ids = messages[0].split()[-10:]
+    email_ids = messages[0].split()[-20:]
     emails = []
 
     for email_id in email_ids:

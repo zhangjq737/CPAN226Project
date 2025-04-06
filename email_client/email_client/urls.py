@@ -24,7 +24,7 @@ urlpatterns = [
     path("inbox/", views.get_inbox, name="inbox"),
     path("sent/", views.get_sent, name="sent"),
     path("drafts/", views.get_drafts, name="drafts"),
-    path("send-email/", views.send_email, name="send_email"),
+    path("send_email/", views.send_email, name="send_email"),
     path("get_email_detail/", views.get_email_detail, name="get_email_detail"),
-    path("save-draft/", views.save_draft, name="save_draft"),
+    path("save_draft/", views.save_draft, name="save_draft"),
 ]

@@ -107,7 +107,7 @@ const EmailOperations = {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
         try {
-            const response = await fetch("/send-email/", {
+            const response = await fetch("/send_email/", {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -139,7 +139,7 @@ const EmailOperations = {
         };
 
         try {
-            const response = await fetch('/save-draft/', {
+            const response = await fetch('/save_draft/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
