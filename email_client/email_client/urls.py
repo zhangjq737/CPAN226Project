@@ -27,4 +27,7 @@ urlpatterns = [
     path("send_email/", views.send_email, name="send_email"),
     path("get_email_detail/", views.get_email_detail, name="get_email_detail"),
     path("save_draft/", views.save_draft, name="save_draft"),
+
+    path("home/", views.home_view, name="home_view"),
+    path("about/", views.about_view, name="about_view"),
 ]

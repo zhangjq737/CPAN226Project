@@ -304,3 +304,47 @@ def save_draft(request):
             print(traceback.format_exc())  
             return JsonResponse({"status": "error", "message": str(e)})
     return JsonResponse({"status": "error", "message": "Invalid method"})
+
+# Function to render the Home Page. Displays a welcome message and provides a link to compose a new email.
+def home_view(request):
+    context = {
+        'title': 'Home Page - Django Email App',
+        'welcome_message': 'Welcome to the Django Email Application!',
+        'instructions': [
+            'Click the "+ Compose" button on the Main Email Dashboard Page to start writing your email.',
+            'You can:',
+            '1. Add a subject and message',
+            '2. Send to one or more recipients (supports CC)',
+            '3. Attach files',
+            '4. Send your email instantly!',
+            '5. Use the sidebar to navigate your Inbox, Sent, and Draft folders.',
+            '6. Unread and unsent messages will be indicated clearly.',
+            '7. Your communication is now simple, fast, and organized — all in one place!',
+        ]
+    }
+    return render(request, 'email_client_app/home.html', context)
+
+# Function to render the About Page. Provides information about the project and contributors.
+def about_view(request):
+    context = {
+        'title': 'About Page - Django Email App',
+        'project_description': 'This application allows the email sender, which is the user, to compose and send emails using a clean, web-based interface.',
+        'features': [
+            '1. Compose and Send Emails with a modern interface',
+            '2. Add one or more recipients, including CC support',
+            '3. Attach files to your messages',
+            "4. Use the '+ Compose' button for quick access to email creation",
+            '5. Navigate between Inbox, Sent, and Draft folders easily',
+            '6. View email counts for unread (Inbox) or unsent (Drafts) messages',
+            '7. Compatible with Gmail servers for real-time email communication',
+            '8. Fully responsive design built with React-Bootstrap',
+            '9. Secure backend integration using Django (Python), SMTP (Simple Mail Transfer Protocol), and IMAP (Internet Message Access Protocol)'
+        ],
+        'purpose': "This app was built to simplify email communication and offer core features in a clean layout, whether you're sending to a single recipient or multiple contacts.",
+        'group_members': [
+            '1. Ekroop Hundal-Vatcher (n01632322)',
+            '2. Ritik Patel (n01565101)',
+            '3. Jason Zhang (n01677466)'
+        ]
+    }
+    return render(request, 'email_client_app/about.html', context)

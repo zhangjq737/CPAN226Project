@@ -1,3 +1,4 @@
+<!-- Modify base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,10 +16,15 @@
     </style>
 </head>
 <body class="bg-gray-50 h-full">
-    <div class="flex h-full">
-        {% block sidebar %}{% endblock %}
-        <div class="flex-1 flex flex-col h-full overflow-hidden">
-            {% block content %}{% endblock %}
+    <div class="flex flex-col h-full">
+        <!-- Add this line to include the navbar -->
+        {% include 'email_client_app/navbar.html' %}
+        
+        <div class="flex flex-1 h-full overflow-hidden">
+            {% block sidebar %}{% endblock %}
+            <div class="flex-1 flex flex-col h-full overflow-hidden">
+                {% block content %}{% endblock %}
+            </div>
         </div>
     </div>
     {% block modals %}{% endblock %}

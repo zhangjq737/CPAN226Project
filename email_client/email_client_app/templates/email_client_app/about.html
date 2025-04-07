@@ -1,0 +1,91 @@
+{% extends 'email_client_app/base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-6 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ title }}</h1>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-2xl font-semibold text-primary-600 mb-4">About The Django Email Application</h2>
+        <p class="text-gray-700 mb-6 leading-relaxed">{{ project_description }}</p>
+
+        <div class="mb-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Key Features
+            </h3>
+            <ul class="pl-6 space-y-2">
+                {% for feature in features %}
+                    <li class="flex items-start">
+                        <span class="text-primary-500 mr-2">•</span>
+                        <span class="text-gray-700">{{ feature }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="mb-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Purpose
+            </h3>
+            <p class="text-gray-700 leading-relaxed">{{ purpose }}</p>
+        </div>
+
+        <div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Group Members
+            </h3>
+            <ul class="pl-6 space-y-2">
+                {% for member in group_members %}
+                    <li class="flex items-start">
+                        <span class="text-primary-500 mr-2">•</span>
+                        <span class="text-gray-700">{{ member }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="bg-gray-50 rounded-lg border border-gray-200 p-4 inline-block">
+        <p class="text-gray-600 font-medium"><span id="live-time"></span></p>
+    </div>
+</div>
+
+<script>
+function updateTime() {
+    const now = new Date();
+    const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    };
+
+    let formattedTime = now.toLocaleString('en-US', options);
+
+    // Add suffix to day
+    const day = now.getDate();
+    let suffix = "th";
+    if (day % 10 === 1 && day !== 11) suffix = "st";
+    else if (day % 10 === 2 && day !== 12) suffix = "nd";
+    else if (day % 10 === 3 && day !== 13) suffix = "rd";
+
+    formattedTime = formattedTime.replace(day, `${day}${suffix}`);
+    
+    document.getElementById("live-time").innerText = `Current Date and Time: ${formattedTime}`;
+}
+setInterval(updateTime, 1000);
+updateTime();
+</script>
+{% endblock %}
